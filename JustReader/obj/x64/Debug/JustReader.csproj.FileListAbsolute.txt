@@ -1,0 +1,16 @@
+D:\VS\JustReader\JustReader\JustReader\bin\x64\Debug\JustReader.exe.config
+D:\VS\JustReader\JustReader\JustReader\bin\x64\Debug\JustReader.exe
+D:\VS\JustReader\JustReader\JustReader\bin\x64\Debug\JustReader.pdb
+D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\JustReader.csprojResolveAssemblyReference.cache
+D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\MainWindow.g.cs
+D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\App.g.cs
+D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\GeneratedInternalTypeHelper.g.cs
+D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\JustReader_MarkupCompile.cache
+D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\JustReader_MarkupCompile.lref
+D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\App.baml
+D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\MainWindow.baml
+D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\JustReader.g.resources
+D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\JustReader.Properties.Resources.resources
+D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\JustReader.csproj.GenerateResource.Cache
+D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\JustReader.exe
+D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\JustReader.pdb

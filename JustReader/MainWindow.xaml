@@ -1,0 +1,103 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:JustReader"
+        xmlns:Documents="clr-namespace:System.Windows.Documents;assembly=PresentationUI" xmlns:ColorPicker="clr-namespace:ColorPicker" x:Name="wnd" x:Class="JustReader.MainWindow"
+        mc:Ignorable="d"
+        Title="JustReader" Height="700" Width="1200" PreviewKeyDown="Window_PreviewKeyDown" Closing="Window_Closing" MinWidth="500" MinHeight="500">
+    <Grid HorizontalAlignment="Stretch" Height="Auto" VerticalAlignment="Top" Width="Auto" Margin="0,0,0,0">
+        <FlowDocumentPageViewer x:Name="fld"  VerticalAlignment="Top" Padding="0,0,0,0" Template="{DynamicResource FlowDocumentPageViewerControlTemplate1}" Margin="0,0,0,0" FontSize="14" MaxZoom="300" MinZoom="50" PreviewMouseDown="fld_MouseDown" MouseMove="fld_MouseMove">
+            <FlowDocumentPageViewer.Resources>
+                <Style TargetType="{x:Type Paragraph}">
+                    <Setter Property="Margin" Value="0 15 0 15" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="Cursor" Value="Arrow" />
+                </Style>
+            </FlowDocumentPageViewer.Resources>
+
+            <FlowDocument x:Name="fdoc" PagePadding="0,0,0,0" IsOptimalParagraphEnabled="True" ColumnWidth="1000" ColumnRuleWidth="1" IsColumnWidthFlexible="True" PageWidth="Auto">
+            </FlowDocument>
+            <FlowDocumentPageViewer.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header = "Открыть книгу" Click = "file_open_Click" />
+                    <MenuItem x:Name="recent_context_item" IsEnabled="False"  Header = "Последние открытые" Click = "file_recent_Click" />
+                    <MenuItem Header = "Настройки" Click = "setting_Click" />
+                    <Separator />
+                    <MenuItem Header = "Выход" Click = "file_exit_Click" />
+                </ContextMenu>
+            </FlowDocumentPageViewer.ContextMenu>
+        </FlowDocumentPageViewer>
+        <Canvas x:Name="settingDlg" Width="440" Height="240" Background="White" Visibility="Collapsed">
+            <Border x:Name="CanvasBorder" Width="440" Height="240" BorderBrush="Gray" BorderThickness="1">
+                <Grid Margin="10 0 10 10" HorizontalAlignment="Center"  VerticalAlignment="Center" Height="Auto" MinWidth="400">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="40"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Label  Grid.Row="0" Grid.ColumnSpan="2" HorizontalAlignment="Center" FontSize="21" Content="НАСТРОЙКИ"/>
+                    <Border Grid.Row="1" Grid.ColumnSpan="2" Height="0.5"  BorderBrush="Gray" BorderThickness="0,0.5,0,0" Margin="0,0,0,10"/>
+
+                    <Label  Grid.Row="2" Grid.Column="0" Height="25" Content="Цвет фона"/>
+                    <ColorPicker:ColorComboBox x:Name="colorPickerBack" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Left" Height="25" Margin="0,0,0,0" VerticalAlignment="Top" Width="150"/>
+                    <Label  Grid.Row="3" Grid.Column="0" Height="25" Content="Цвет текста"/>
+                    <ColorPicker:ColorComboBox x:Name="colorPickerFore" Grid.Row="3" Grid.Column="1" HorizontalAlignment="Left" Height="25" Margin="0,0,0,0" VerticalAlignment="Top" Width="150"/>
+                    <Label  Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Height="25" Content="Переход на сл. страницу по клику"/>
+                    <CheckBox  Grid.Row="4" Grid.Column="1" x:Name="ChkIsClick" />
+
+                    <Label  Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Height="25" Content="Переход на сл. страницу по пробелу"/>
+                    <CheckBox  Grid.Row="5" Grid.Column="1" x:Name="ChkIsSpace" />
+
+                    <Border Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Height="0.5"  BorderBrush="Gray" BorderThickness="0,0.5,0,0" Margin="10,10,0,10"/>
+
+                    <WrapPanel Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Right" Margin="0,0,0,0">
+                        <Button IsCancel="True" Margin="0 0 10 0" MinWidth="80" Click="setting_Button_Save" Content="Сохранить"/>
+                        <Button Margin="0 0 10 0" MinWidth="80" Click="setting_Button_Apply" Content="Применить"/>
+                        <Button IsCancel="True" MinWidth="60" Click="setting_Button_Cancel" Content="Закрыть"/>
+                    </WrapPanel>
+                </Grid>
+            </Border>
+        </Canvas>
+        <Canvas x:Name="recentDlg" Width="440" Height="420" Background="White" Visibility="Collapsed">
+            <Border Width="440" Height="420" BorderBrush="Gray" BorderThickness="1">
+                <Grid Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center" Height="Auto" MinWidth="400">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="40" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="300" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Label  Grid.Row="0" HorizontalAlignment="Center" FontSize="21" Content="ПОСЛЕДНИЕ ОТКРЫТЫЕ КНИГИ"/>
+                    <Border Grid.Row="1" Height="0.5"  BorderBrush="Gray" BorderThickness="0,0.5,0,0" Margin="0,0,0,10"/>
+
+                    <ListBox x:Name="recentList" Grid.Row="2" SelectionChanged="recentList_SelectionChanged" BorderThickness="0"/>
+                    <Border Grid.Row="3" BorderBrush="Gray" BorderThickness="0,0.5,0,0" Margin="0,10,0,10"/>
+                    <WrapPanel Grid.Row="4" HorizontalAlignment="Right" Margin="0,0,0,0">
+                        <Button IsCancel="True" MinWidth="60" Click="recent_Button_Cancel" Content="Отмена"/>
+                    </WrapPanel>
+                </Grid>
+            </Border>
+        </Canvas>
+        
+        <Menu x:Name="menu" Height="28" VerticalAlignment="Top" Margin="0,0,0,0" Visibility="Collapsed" Background="White" BorderBrush="Gray" BorderThickness="0,0,0,1">
+            <MenuItem x:Name="file_item" Header="Файл" DisplayMemberPath="file_item" Padding="10,2,10,2">
+                <MenuItem Header="Открыть" HorizontalAlignment="Left" Click="file_open_Click" Width="140"/>
+                <MenuItem x:Name="recent_menu_item" Header="История" HorizontalAlignment="Left" Click="file_recent_Click" Width="140"/>
+                <MenuItem Header="Выход" HorizontalAlignment="Left" Click="file_exit_Click" Width="140"/>
+            </MenuItem>
+            <MenuItem x:Name="setting_item" Header="Настройки" DisplayMemberPath="setting_item" Padding="10,2,10,2" Click="setting_Click"/>
+        </Menu>
+    </Grid>
+</Window>
