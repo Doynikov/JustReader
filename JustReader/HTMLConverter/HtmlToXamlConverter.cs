@@ -534,7 +534,7 @@ namespace HTMLConverter
                     case "a":
                         // DISABLE LINKS
                         //AddHyperlink(xamlParentElement, htmlElement, inheritedProperties, stylesheet, sourceContext);
-                        AddSpanOrRun(xamlParentElement, htmlElement, inheritedProperties, stylesheet, sourceContext);
+                        //AddSpanOrRun(xamlParentElement, htmlElement, inheritedProperties, stylesheet, sourceContext);
                         break;
                     case "img":
                         AddImage(xamlParentElement, htmlElement, inheritedProperties, stylesheet, sourceContext);
