@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
+
 using System.Data;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,8 +13,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using System.IO;
 using System.Security.Permissions;
-using HTMLConverter;
 using System.IO.Compression;
+using System.Collections.Generic;
 
 
 
@@ -34,6 +35,7 @@ namespace JustReader
         string currentFile = "";
         string currentName = "";
         string currentPage = "1";
+        string currentNotes = "";
 
         INIManager managerini;
         DispatcherTimer timer = null;
@@ -113,44 +115,124 @@ namespace JustReader
                     {
                         if (entry.Name.ToUpper().EndsWith(".FB2"))
                         {
-                            System.IO.Compression.ZipArchiveEntry zipEntry = apcZipFile.GetEntry(entry.Name);
+                            System.IO.Compression.ZipArchiveEntry zipEntry = apcZipFile.GetEntry(entry.Name);                            
                             using (System.IO.StreamReader sr = new System.IO.StreamReader(zipEntry.Open()))
                             {
-                                //read the contents into a string
                                 fileContents = sr.ReadToEnd();
                             }
+                            if (fileContents.IndexOf("encoding=\"windows-1251\"") > 0)
+                            {
+                                using (System.IO.StreamReader sr = new System.IO.StreamReader(zipEntry.Open(), Encoding.GetEncoding("Windows-1251")))
+                                {
+                                    fileContents = sr.ReadToEnd();
+                                }
+                            }
                         }
+
                     }
                     sidLoadXmlFromFb2(filePath, 1, fileContents);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                MessageBox.Show("0");
-                throw;
+                MessageBox.Show("Ошибка чтения");
+   //             throw;
             }
         }
+
         //---------------------------------------------------------------------------------------
         private void sidLoadXmlFromFb2(string fn, int zip, string sxml)
         {
             string s = "";
-            StringBuilder sb = new StringBuilder();
-            parseFb2 fb = new parseFb2(fn, zip, sxml);
-            if (fb.validFile == true)
+            ParseFbToXaml fb = new ParseFbToXaml(fn, zip, sxml);
+            s = fb.getXaml();
+            currentName = fb.stringTitle;
+            this.Title = currentName;
+
+           // File.WriteAllText(basePath + "/qq.txt", s);
+            fdoc = null;
+            fdoc = XamlReader.Parse(s) as FlowDocument;
+            // прорисовка изображений в книге
+
+            BitmapImage bitmap;
+            Image image;
+            string[] imagesStack = fb.imagesStack.ToArray();
+            string[] binaryStack = fb.binaryStack.ToArray();
+            for (int i = 0; i < imagesStack.Length; i++)
             {
-                sb.Append("<div id='header'>");
-                sb.Append(fb.getTitle());
-                sb.Append(fb.getSequenceLine());
-                sb.Append(fb.getAuthor());
-                sb.Append(fb.getCover());
-                sb.Append(fb.getAnnotation());
-                sb.Append("</div>");
-                currentFile = fn;
-                currentName = fb.getTitleLine();
-                this.Title = currentName;
-                sb.Append(fb.getBody());
-                sidInitNewDocument(sb.ToString(), 1);
+                image = (Image)fdoc.FindName(imagesStack[i]);
+                if (image != null)
+                {                    
+                    try
+                    {
+                        bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.StreamSource = new MemoryStream(Convert.FromBase64String(binaryStack[i]));
+                        bitmap.EndInit();
+                        image.Source = bitmap;
+                        image.Stretch = Stretch.None;
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                }
             }
+
+            Hyperlink link;
+            foreach (string item in fb.notesStack)
+            {
+                link = (Hyperlink)fdoc.FindName(item);
+                if (link != null)
+                {
+                    link.AddHandler(Button.ClickEvent, new RoutedEventHandler(sidNotesClick), true);
+                }
+            }
+
+            Section section;
+            Console.WriteLine("---------------------------------------");
+
+            ListBoxItem l;
+            booktocList.Items.Clear();
+
+            string[] tocArray = fb.tocStack.Reverse().ToArray();
+            for (int i = 0; i < tocArray.Length; i++)
+            {
+                section = (Section)fdoc.FindName(tocArray[i]);
+                if (section != null)
+                {
+                    s = "";
+                    foreach(Paragraph p in section.Blocks)
+                    {
+                       s += ((Run)p.Inlines.FirstInline).Text + " ";
+                    }
+                    l = new ListBoxItem();
+                    if (s!="")
+                    {
+                        try
+                        {
+                            string sectiontag = section.Tag.ToString() + "";
+                            int level = Convert.ToInt32(sectiontag);
+                            if (level > 1)
+                            {
+                                l.FontSize = 11;
+                                Thickness th = new Thickness(10 * (level-1), 0, 0, 0);
+                                l.Padding = th;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                        }
+
+                    }
+                    l.Content = s;
+                    
+                    l.Tag = tocArray[i];
+                    booktocList.Items.Add(l);
+                }
+            }
+
+
+            sidInitNewDocument(s);
         }
         private void sidLoadHTML(string fn)
         {
@@ -158,55 +240,17 @@ namespace JustReader
             if (System.IO.File.Exists(fn))
             {
                 s = File.ReadAllText(fn, Encoding.GetEncoding(1251));
+                // взять currentName из currentFile
                 s = s.Replace("<BR><DD>", "<DD>");
-                if(s!="") sidInitNewDocument(s, 0);
+                if(s!="") sidInitNewDocument(s);
             }
 
         }
 
         //----------------------------------------------------------------------------------------------//
-        private void sidInitNewDocument(string s, int bimg) // Инициализация новой книги
-        { 
-            BitmapImage bitmap;
-            Image image;
-            BlockUIContainer bl = new BlockUIContainer();
-            Paragraph p1 = new Paragraph();
-            HtmlToXamlConverter.sidRefreshConverter();
-            s = HtmlToXamlConverter.ConvertHtmlToXaml(s, true);
-            fdoc = null;
-            fdoc = XamlReader.Parse(s) as FlowDocument;
-            // прорисовка изображений в книге
-            if (bimg == 1)
-            {
-                Paragraph img;
-                for (int i = 1; i < 101; i++)
-                {
-                    img = (Paragraph)fdoc.FindName("img" + i.ToString());
-                    if (img != null)
-                    {
-                        try
-                        {
-                            s = ((Run)img.Inlines.FirstInline).Text;
-                            img.Inlines.Clear();
-                            bitmap = new BitmapImage();
-                            bitmap.BeginInit();
-                            bitmap.StreamSource = new MemoryStream(Convert.FromBase64String(s));
-                            bitmap.EndInit();
-                            image = new Image();
-                            image.Source = bitmap;
-                            image.Stretch = Stretch.None;
-                            img.Inlines.Add(image);
-
-                        }
-                        catch (Exception ex)
-                        {
-                            break;
-                        }
-                    }
-                    else break;
-                }
-            }
-                // --
+        private void sidInitNewDocument(string s) // Инициализация новой книги
+        {           
+// --
             fld.Document = fdoc;
             fdoc.IsOptimalParagraphEnabled = true;
             fdoc.ColumnWidth = 1000;
@@ -245,6 +289,47 @@ namespace JustReader
         // Переход на текущую страницу после ее обработки ридером
         //
         //---------------------------------------------------------------------------------------
+
+        public void sidNotesClick(object sender, RoutedEventArgs e)
+        {
+            Hyperlink link = (Hyperlink)sender;
+            string s = link.Name;
+            
+            if(s!="")
+            {
+                s = "section_" + s;
+                //MessageBox.Show(s);
+                Section section = (Section)fdoc.FindName(s);
+                if(section!=null)
+                {
+                    currentNotes = s;
+                    //MessageBox.Show("!!!");
+                    //section.BringIntoView();
+                    panel_notes.Visibility = Visibility.Visible;
+                    //MessageBox.Show(section.Blocks.Count.ToString());
+                    fdoc_notes.Blocks.Clear();                    
+                    fdoc_notes.Tag=s;
+                    Block[] ablock = section.Blocks.ToArray();
+                    for (int i=1; i<ablock.Length; i++)
+                    {
+                        fdoc_notes.Blocks.Add(ablock[i]);
+                    }
+                }
+            }
+            
+        }
+        private void sidHiddenNotes()
+        {
+            Section section = (Section)fdoc.FindName(currentNotes);
+            foreach (Block block in fdoc_notes.Blocks.ToArray())
+            {
+                section.Blocks.Add(block);
+            }
+            panel_notes.Visibility = Visibility.Collapsed;
+            currentNotes = "";
+            fld.Focus();
+        }
+
         private void timerStart()
         {
             timer = new DispatcherTimer();
@@ -308,9 +393,17 @@ namespace JustReader
                     break;
                 case "Escape":
                     // выход из программы
-                    Application.Current.Shutdown();
+                    if (panel_notes.Visibility.ToString() == "Visible")
+                    {
+                        panel_notes.Visibility = Visibility.Collapsed;
+                    }
+                    else
+                    {
+                        Application.Current.Shutdown();
+                    }
                     break;
             }
+            sidHiddenNotes();
             fld.Focus();
         }
         //---------------------------------------------------------------------------------------
@@ -330,7 +423,11 @@ namespace JustReader
 
         private void fld_MouseDown(object sender, MouseButtonEventArgs e) // переход на следующую страницу по клику
         {
-            if (e.LeftButton.ToString() == "Pressed" && isClickNextPage == "1") fld.NextPage();
+            if (e.LeftButton.ToString() == "Pressed" && isClickNextPage == "1")
+            {
+                fld.NextPage();
+                sidHiddenNotes();
+            }
         }
         //---------------------------------------------------------------------------------------
         private void fld_MouseMove(object sender, MouseEventArgs e) // скрыть/показать верхнее меню
@@ -358,6 +455,8 @@ namespace JustReader
         //---------------------------------------------------------------------------------------
         private void file_recent_Click(object sender, RoutedEventArgs e) // открыть окно с историей
         {
+            settingDlg.Visibility = Visibility.Collapsed;
+            booktocDlg.Visibility = Visibility.Collapsed;
             ListBoxItem l;
             string[] aname = managerini.GetPrivateString("main", "fileNameIni").Split('|');
             recentList.Items.Clear();
@@ -370,9 +469,19 @@ namespace JustReader
             }            
             recentDlg.Visibility=Visibility.Visible;
         }
+
+        private void booktoc_Click(object sender, RoutedEventArgs e) // открыть окно с оглавлением
+        {
+            recentDlg.Visibility = Visibility.Collapsed;
+            settingDlg.Visibility = Visibility.Collapsed;
+            booktocDlg.Visibility = Visibility.Visible;
+        }
+        
         //---------------------------------------------------------------------------------------
         public void setting_Click(object sender, RoutedEventArgs e) // открыть окно с историей
         {
+            recentDlg.Visibility = Visibility.Collapsed;
+            booktocDlg.Visibility = Visibility.Collapsed;
             settingDlg.Visibility = Visibility.Visible;
         }        
         //---------------------------------------------------------------------------------------
@@ -389,20 +498,68 @@ namespace JustReader
 
         public void recentList_SelectionChanged(object sender, SelectionChangedEventArgs e) // выбрать книгу в истории
         {
-            string s = "";
-            ListBox l = e.Source as ListBox;
-            if (l.SelectedIndex > -1)
+            try
             {
-                string[] apath = managerini.GetPrivateString("main", "filePathIni").Split('|');
-                s=apath[l.SelectedIndex+1];
-                if (s != "") sidReadFile(s);
-                recentDlg.Visibility = Visibility.Collapsed;
+                string s = "";
+                ListBox l = e.Source as ListBox;
+                if (l.SelectedIndex > -1)
+                {
+                    string[] apath = managerini.GetPrivateString("main", "filePathIni").Split('|');
+                    s = apath[l.SelectedIndex + 1];
+                    recentDlg.Visibility = Visibility.Collapsed;
+                    if (s != "")
+                    {
+                        booktocList.Items.Clear();
+                        sidReadFile(s);
+                    }
+                }
+                else
+                {
+                    recentDlg.Visibility = Visibility.Collapsed;
+                }
             }
+            catch (Exception ex)
+            {
+
+            }
+
         }
         //---------------------------------------------------------------------------------------
         private void recent_Button_Cancel(object sender, RoutedEventArgs e) // закрыть окно истории
         {
             recentDlg.Visibility = Visibility.Collapsed;
+        }
+
+        //---------------------------------------------------------------------------------------
+        //
+        // Окно Оглавление книги
+        //
+        //---------------------------------------------------------------------------------------
+
+        public void booktocList_SelectionChanged(object sender, SelectionChangedEventArgs e) // перейти к разделу
+        {
+                try
+                {
+                    string s = "";
+                    ListBox l = e.Source as ListBox;
+                    ListBoxItem li = (ListBoxItem)l.SelectedItem;
+                    s = li.Tag.ToString();
+                    Section section = (Section)fdoc.FindName(s);
+                    if (section!=null)
+                    {
+                        section.BringIntoView();
+                    }
+                }
+                catch(Exception ex)
+                {
+
+                }
+                booktocDlg.Visibility = Visibility.Collapsed;
+        }
+        //---------------------------------------------------------------------------------------
+        private void booktoc_Button_Cancel(object sender, RoutedEventArgs e) // закрыть окно оглавление
+        {
+            booktocDlg.Visibility = Visibility.Collapsed;
         }
 
         //---------------------------------------------------------------------------------------
@@ -580,6 +737,7 @@ namespace JustReader
             string[] a;
             basePath = AppDomain.CurrentDomain.BaseDirectory;
             tempPath = basePath + "temp";
+            
             managerini = new INIManager(basePath + "JustReader.ini");
             sidSetWindowSize();  // Установка размеров окна
             sidSetZoom(); // Установка масштаба книги
@@ -628,7 +786,7 @@ namespace JustReader
         //---------------------------------------------------------------------------------------
         private void sidSetZoom() // Установка масштаба книги
         {
-            string s = sidGetLastIni("zoomIni");
+            string s = sidGetLastIni("zoomIni");            
             try
             {
                 if (fld.Zoom.ToString() != s) fld.Zoom = Double.Parse(s);
@@ -677,7 +835,14 @@ namespace JustReader
             else
             {
                 currentFile = sidGetLastIni("filePathIni");
-                if (currentFile != "") sidReadFile(currentFile);
+                if (currentFile != "")
+                {
+                    sidReadFile(currentFile);
+                }
+                else
+                {
+                    currentPath = basePath;
+                }
             }
         }
         //---------------------------------------------------------------------------------------
@@ -731,5 +896,24 @@ namespace JustReader
             ar = tempAr;
         }
 
+        private void fld_PageViewsChanged(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void fdoc_notes_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            sidHiddenNotes();
+        }
+
+        private void wnd_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+
+        }
+
+        private void fld_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            sidHiddenNotes();
+        }
     }
 }

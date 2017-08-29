@@ -14,3 +14,7 @@ D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\JustReader.Properties.Resou
 D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\JustReader.csproj.GenerateResource.Cache
 D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\JustReader.exe
 D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\JustReader.pdb
+D:\VS\JustReader\JustReader\JustReader\bin\x64\Debug\JustReader.exe.manifest
+D:\VS\JustReader\JustReader\JustReader\bin\x64\Debug\JustReader.application
+D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\JustReader.exe.manifest
+D:\VS\JustReader\JustReader\JustReader\obj\x64\Debug\JustReader.application

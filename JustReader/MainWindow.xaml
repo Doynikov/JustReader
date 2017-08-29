@@ -6,23 +6,35 @@
         xmlns:local="clr-namespace:JustReader"
         xmlns:Documents="clr-namespace:System.Windows.Documents;assembly=PresentationUI" xmlns:ColorPicker="clr-namespace:ColorPicker" x:Name="wnd" x:Class="JustReader.MainWindow"
         mc:Ignorable="d"
-        Title="JustReader" Height="700" Width="1200" PreviewKeyDown="Window_PreviewKeyDown" Closing="Window_Closing" MinWidth="500" MinHeight="500">
+        Title="JustReader" Height="700" Width="1200" PreviewKeyDown="Window_PreviewKeyDown" Closing="Window_Closing" MinWidth="500" MinHeight="500" PreviewMouseWheel="wnd_PreviewMouseWheel">
     <Grid HorizontalAlignment="Stretch" Height="Auto" VerticalAlignment="Top" Width="Auto" Margin="0,0,0,0">
-        <FlowDocumentPageViewer x:Name="fld"  VerticalAlignment="Top" Padding="0,0,0,0" Template="{DynamicResource FlowDocumentPageViewerControlTemplate1}" Margin="0,0,0,0" FontSize="14" MaxZoom="300" MinZoom="50" PreviewMouseDown="fld_MouseDown" MouseMove="fld_MouseMove">
+        <FlowDocumentPageViewer x:Name="fld"  VerticalAlignment="Top" Padding="0,0,0,0" Template="{DynamicResource FlowDocumentPageViewerControlTemplate1}" Margin="0,0,0,0" FontSize="14" MaxZoom="300" MinZoom="50" PreviewMouseDown="fld_MouseDown" MouseMove="fld_MouseMove" PageViewsChanged="fld_PageViewsChanged" MouseWheel="fld_MouseWheel">
             <FlowDocumentPageViewer.Resources>
+                <Style TargetType="{x:Type Hyperlink}">
+                    <Setter Property="Foreground" Value="black" />
+                </Style>
                 <Style TargetType="{x:Type Paragraph}">
                     <Setter Property="Margin" Value="0 15 0 15" />
                     <Setter Property="Padding" Value="0" />
                     <Setter Property="Cursor" Value="Arrow" />
                 </Style>
+                <Style x:Key="Header">
+                    <Setter Property="Control.FontSize" Value="48" />
+                    <Setter Property="Control.HorizontalAlignment" Value="Center" />
+                    <Setter Property="Control.Margin" Value="20" />
+                </Style>
+                <Style x:Key="Annotation">
+                    <Setter Property="Control.FontSize" Value="12" />
+                </Style>
             </FlowDocumentPageViewer.Resources>
 
-            <FlowDocument x:Name="fdoc" PagePadding="0,0,0,0" IsOptimalParagraphEnabled="True" ColumnWidth="1000" ColumnRuleWidth="1" IsColumnWidthFlexible="True" PageWidth="Auto">
+            <FlowDocument x:Name="fdoc" PagePadding="0,0,0,0" IsOptimalParagraphEnabled="False" ColumnWidth="1000" ColumnRuleWidth="1" IsColumnWidthFlexible="True" PageWidth="Auto">
             </FlowDocument>
             <FlowDocumentPageViewer.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header = "Открыть книгу" Click = "file_open_Click" />
                     <MenuItem x:Name="recent_context_item" IsEnabled="False"  Header = "Последние открытые" Click = "file_recent_Click" />
+                    <MenuItem x:Name="booktoc_context_item" Header = "Оглавление" Click = "booktoc_Click" />
                     <MenuItem Header = "Настройки" Click = "setting_Click" />
                     <Separator />
                     <MenuItem Header = "Выход" Click = "file_exit_Click" />
@@ -90,14 +102,44 @@
                 </Grid>
             </Border>
         </Canvas>
-        
+
+        <Canvas x:Name="booktocDlg" Width="640" Height="420" Background="White" Visibility="Collapsed">
+            <Border Width="640" Height="420" BorderBrush="Gray" BorderThickness="1">
+                <Grid Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center" Width="620" Height="Auto" MinWidth="620">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="40" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="300" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Label  Grid.Row="0" HorizontalAlignment="Center" FontSize="21" Content="ОГЛАВЛЕНИЕ"/>
+                    <Border Grid.Row="1" Height="0.5"  BorderBrush="Gray" BorderThickness="0,0.5,0,0" Margin="0,0,0,10"/>
+
+                    <ListBox x:Name="booktocList" Grid.Row="2" SelectionChanged="booktocList_SelectionChanged" BorderThickness="0"/>
+                    <Border Grid.Row="3" BorderBrush="Gray" BorderThickness="0,0.5,0,0" Margin="0,10,0,10"/>
+                    <WrapPanel Grid.Row="4" HorizontalAlignment="Right" Margin="0,0,0,0">
+                        <Button IsCancel="True" MinWidth="60" Click="booktoc_Button_Cancel" Content="Отмена"/>
+                    </WrapPanel>
+                </Grid>
+            </Border>
+        </Canvas>
+
         <Menu x:Name="menu" Height="28" VerticalAlignment="Top" Margin="0,0,0,0" Visibility="Collapsed" Background="White" BorderBrush="Gray" BorderThickness="0,0,0,1">
-            <MenuItem x:Name="file_item" Header="Файл" DisplayMemberPath="file_item" Padding="10,2,10,2">
-                <MenuItem Header="Открыть" HorizontalAlignment="Left" Click="file_open_Click" Width="140"/>
-                <MenuItem x:Name="recent_menu_item" Header="История" HorizontalAlignment="Left" Click="file_recent_Click" Width="140"/>
-                <MenuItem Header="Выход" HorizontalAlignment="Left" Click="file_exit_Click" Width="140"/>
-            </MenuItem>
-            <MenuItem x:Name="setting_item" Header="Настройки" DisplayMemberPath="setting_item" Padding="10,2,10,2" Click="setting_Click"/>
+            <MenuItem Header="Открыть" Click="file_open_Click" Padding="10,2,10,2"/>
+            <MenuItem Header="История" x:Name="recent_menu_item" Click="file_recent_Click" Padding="10,2,10,2"/>
+            <MenuItem Header="Оглавление" x:Name="booktoc_menu_item" Click="booktoc_Click" Padding="10,2,10,2"/>
+            <MenuItem Header="Настройки" Click="setting_Click" Padding="10,2,10,2"/>
+            <MenuItem Header="Выход" Click="file_exit_Click" Padding="10,2,10,2"/>
         </Menu>
+        <DockPanel x:Name="panel_notes"  HorizontalAlignment="Stretch" Height="Auto"  Margin="0,0,0,20" VerticalAlignment="Bottom" Visibility="Collapsed">
+            <Grid>
+            <FlowDocumentScrollViewer Cursor="Arrow"  BorderBrush="Gray" x:Name="fld_notes" BorderThickness="0,1,0,0" HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Stretch">
+                    <FlowDocument Cursor="Arrow" x:Name="fdoc_notes" PagePadding="20" IsOptimalParagraphEnabled="False" ColumnWidth="1000" ColumnRuleWidth="1" IsColumnWidthFlexible="True" PageWidth="Auto" FontFamily="Arial" Background="#E5F0F0F0" FontSize="17" MouseDown="fdoc_notes_MouseDown">
+                </FlowDocument>
+            </FlowDocumentScrollViewer>
+            <Label VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0, 0, 15, 0" Cursor="Hand" Foreground="Black" FontSize="17" FontFamily="verdana" Width="20" Height="30" Padding="0,0,0,0">x</Label>
+            </Grid>
+        </DockPanel>
     </Grid>
 </Window>

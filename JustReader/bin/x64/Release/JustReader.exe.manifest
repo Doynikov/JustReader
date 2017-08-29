@@ -48,14 +48,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="JustReader.exe" size="134616">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="JustReader.exe" size="141272">
       <assemblyIdentity name="JustReader" version="1.0.0.0" language="neutral" processorArchitecture="amd64" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>+OHUyqTo0EJdbfXT8N2OSBgrO5hQOFKE4LoLXNvn+g4=</dsig:DigestValue>
+        <dsig:DigestValue>d5Pz2JQWCamjrkUlDaPaODLjHcpRMBwseIu+/lzxcbg=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
